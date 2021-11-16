@@ -7,3 +7,6 @@
 A Shiny app that creates survival curves for changes in gene expression within cancer metastasis in publicly available datasets.
 
 https://sheffield-university.shinyapps.io/MetSurveCurve/
+
+
+![MetSurvCurv](/images/example.png)
