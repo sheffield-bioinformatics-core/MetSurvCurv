@@ -12,6 +12,8 @@ library(tidyverse)
 library(ggfortify)
 library(partykit)
 library(survival)
+library(coin)
+
 #data read in
 expression <- read_csv("data/vdx_expression.csv")
 meta <- read_csv("data/vdx_meta.csv")
