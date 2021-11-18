@@ -1,6 +1,5 @@
-#
 # This is MetSurvCurv
-# 
+# Emily V Chambers, Mark J Dunning, Sheffield Bioinformatics Core
 
 
 library(shiny)
@@ -18,41 +17,37 @@ library(coin)
 expression <- read_csv("data/vdx_expression.csv")
 meta <- read_csv("data/vdx_meta.csv")
 
-# Define UI for application that draws a histogram
 ui <- fluidPage(
 
-    # Application title
     titlePanel("MetSurvCurv"),
 
     sidebarLayout(position = "left",
         
         sidebarPanel(
-            strong("Select Dataset"),
+            strong("Dataset:"),
             actionButton(inputId = "vdx", 
                          label = "VDX", 
-                    
-                
             ),
-            selectInput(inputId = "genename", 
-                    label ="Select Gene", 
-                    choices =colnames(expression),
-                    selected="ABO"
+
+            selectizeInput(inputId = "genename", 
+                    label ="Select Gene:", 
+                    choices =NULL
                     ),
             width=3
             ),
         mainPanel(
             plotOutput("survPlot"),
+            textOutput("dataSelection")
         )
     )
 )
 
 # Data pre-processing ----
 
-
-
-
-# Define server logic required to draw a survivaL plot
-server <- function(input, output) {
+# Define server logic required to draw a survival plot
+server <- function(input, output, session) {
+    
+    updateSelectizeInput(session, "genename", choices = colnames(expression)[-1], selected="GPN3",server = TRUE)
     
     curve_data = reactive({
         GName <- input$genename
@@ -66,11 +61,14 @@ server <- function(input, output) {
         curve_data$split <- split
         #signif <- 1 - ctree_xfs@tree$criterion$maxcriterion
         curve_data <- curve_data %>% mutate(threshold = ifelse(get(GName)<=split, paste(input$genename,intToUtf8(8804) , split), paste(input$genename,">", split)))
-        
-
         curve_data
     })
-    observe({print(curve_data())})
+    
+    output$dataSelection <- renderText({
+       paste("Gene expression datasets published by Wang et al. [2005] and Minn et al. [2007] (VDX)")
+    })
+    
+    #observe({print(curve_data())})
     output$survPlot <- renderPlot({
             plot_data <- curve_data()
             surv_xfs_dat <- survfit(surv_xfs~threshold,plot_data)
@@ -80,9 +78,8 @@ server <- function(input, output) {
             autoplot(surv_xfs_dat) +
                 labs(x = "\n Time to Metastasis", y = "Probability of freedom from metastasis\n", title = paste(input$genename,"- p=", newPval)) +
                 theme(plot.title = element_text(hjust = 0.5))+
-                annotate(geom = "table", x = 20, y = 0.2, label = list(freqs), 
-                     vjust = 1, hjust = 0) +
-                ylim(0,1)
+                annotate(geom = "table", x = 0, y = 0.15, label = list(freqs), vjust = 1, hjust = 0) +
+                scale_y_continuous(limits = c(0,1), labels = scales::percent)
     })
 }
 
