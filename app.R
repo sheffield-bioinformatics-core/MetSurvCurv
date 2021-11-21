@@ -1,8 +1,9 @@
 # This is MetSurvCurv
 # Emily V Chambers, Mark J Dunning, Sheffield Bioinformatics Core
 
-
 library(shiny)
+library(shinydashboard)
+library(shinydashboardPlus)
 library(readr)
 library(ggplot2)
 library(dplyr)
@@ -17,30 +18,25 @@ library(coin)
 expression <- read_csv("data/vdx_expression.csv")
 meta <- read_csv("data/vdx_meta.csv")
 
-ui <- fluidPage(
+ui <- dashboardPage(
 
-    titlePanel("MetSurvCurv"),
-
-    sidebarLayout(position = "left",
-        
-        sidebarPanel(
-            strong("Dataset:"),
-            actionButton(inputId = "vdx", 
-                         label = "VDX", 
+    header = dashboardHeader(title="MetSurvCurv"
             ),
-
+    sidebar = dashboardSidebar(
+            collapsed=F,
             selectizeInput(inputId = "genename", 
                     label ="Select Gene:", 
                     choices =NULL
-                    ),
-            width=3
+                    )
             ),
-        mainPanel(
+    body = dashboardBody(
             plotOutput("survPlot"),
             textOutput("dataSelection")
-        )
+    ),
+    footer = dashboardFooter(left = "Sheffield Bioinformatics Core",right = "2021"
     )
 )
+
 
 # Data pre-processing ----
 
