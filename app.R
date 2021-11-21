@@ -19,6 +19,7 @@ expression <- read_csv("data/vdx_expression.csv")
 meta <- read_csv("data/vdx_meta.csv")
 
 ui <- dashboardPage(
+    skin = "purple",
 
     header = dashboardHeader(title="MetSurvCurv"
             ),
