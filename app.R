@@ -31,8 +31,19 @@ ui <- dashboardPage(
                     )
             ),
     body = dashboardBody(
-            plotOutput("survPlot"),
-            textOutput("dataSelection")
+      fluidRow(
+        box(
+          width=8,
+          plotOutput("survPlot")
+        )
+      ),
+      fluidRow(
+        box(
+          width=12,
+          textOutput("dataSelection")
+        )
+      ),
+      tags$head(tags$style('.box-header{ display: none}')) 
     ),
     footer = dashboardFooter(left = "Sheffield Bioinformatics Core",right = "2021"
     )
@@ -56,16 +67,17 @@ server <- function(input, output, session) {
         splitrules <- partykit:::.list.rules.party(ctree_xfs, i=nodeids(ctree_xfs))[2] %>% str_split(pattern = " ")
         split <- round(as.numeric(splitrules[[1]][3]),3)
         curve_data$split <- split
+        observe({print(ctree_xfs)})
         #signif <- 1 - ctree_xfs@tree$criterion$maxcriterion
         curve_data <- curve_data %>% mutate(threshold = ifelse(get(GName)<=split, paste(input$genename,intToUtf8(8804) , split), paste(input$genename,">", split)))
         curve_data
+        
     })
     
     output$dataSelection <- renderText({
        paste("Gene expression datasets published by Wang et al. [2005] and Minn et al. [2007] (VDX)")
     })
     
-    #observe({print(curve_data())})
     output$survPlot <- renderPlot({
             plot_data <- curve_data()
             surv_xfs_dat <- survfit(surv_xfs~threshold,plot_data)
