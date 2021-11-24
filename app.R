@@ -25,6 +25,8 @@ ui <- dashboardPage(
             ),
     sidebar = dashboardSidebar(
             collapsed=F,
+            actionButton("gtx", "GTX"),
+            actionButton("metabric", "Metabric - coming soon"),
             selectizeInput(inputId = "genename", 
                     label ="Select Gene:", 
                     choices =NULL
@@ -34,7 +36,8 @@ ui <- dashboardPage(
       fluidRow(
         box(
           width=8,
-          plotOutput("survPlot")
+          plotOutput("outputPlot"),
+          downloadButton(outputId = "downloadPlot", label = "Download")
         )
       ),
       fluidRow(
@@ -60,11 +63,11 @@ server <- function(input, output, session) {
     paste("Gene expression datasets published by Wang et al. [2005] and Minn et al. [2007] (VDX)")
   })
   
-    output$survPlot <- renderPlot({
+    survPlot <-  reactive({
       req(input$genename)
       GName <- input$genename
       gene <- expression %>% select(ID,all_of(GName))
-      surv_xfs <- Surv(meta$time/12, meta$event)
+      surv_xfs <- Surv(meta$time, meta$event)
       curve_data <- meta %>% left_join(gene, by = "ID") %>% cbind(surv_xfs)
       fmula = as.formula(paste("surv_xfs ~ ", GName))
       ctree_xfs <- ctree(fmula, data = curve_data)
@@ -81,13 +84,29 @@ server <- function(input, output, session) {
         freqs <- curve_data %>% count(threshold)
         newPval <- signif(pchisq(surv_diff_dat$chisq, df = length(surv_diff_dat$n)-1, lower.tail=FALSE),3)
         p <- autoplot(surv_xfs_dat) +
-              labs(x = "\n Time to Metastasis", y = "Probability of freedom from metastasis\n", title = paste(GName,"- p=", newPval)) +
-              theme(plot.title = element_text(hjust = 0.5))+
-              annotate(geom = "table", x = 0, y = 0.15, label = list(freqs), vjust = 1, hjust = 0) +
+              labs(x = "\n Time to Metastasis (days)", y = "Probability of freedom from metastasis\n", title = paste(GName,"- p=", newPval)) +
+              theme(plot.title = element_text(hjust = 0.5, size=14),
+                    axis.text=element_text(size=12),
+                    axis.title=element_text(size=14), 
+                    legend.text = element_text(size=10)
+                      )+
+              annotate(geom = "table", x = 0, y = 0.15, label = list(freqs), vjust = 1, hjust = 0, size = 4) +
               scale_y_continuous(limits = c(0,1), labels = scales::percent)
         return(p)
         
     })
+    output$outputPlot <- renderPlot(survPlot())
+    
+    output$downloadPlot <- downloadHandler(
+      filename = function(){
+        paste(input$genename, '_metastasis_curve.png', sep = '')
+        },
+      
+      content = function(file){
+        png(file, width = 800, height = 500)
+        print(survPlot())
+        dev.off()
+      })
 }
 
 # Run the application 
